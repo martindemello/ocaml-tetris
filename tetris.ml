@@ -4,6 +4,7 @@
 (* By Oguz Berke DURAK *)
 
 open Human
+open Allegro
 
 type vector = int * int
 type rectangle = int * int * int * int
@@ -371,3 +372,41 @@ let transition c q t k =
 	  reset_game ();
 	  (draw_board (), Some q.delay)
   | (Dead,_) -> (draw_board (), None)
+
+(* screen dimensions *)
+let width = 1000
+let height = 400
+
+let () =
+  allegro_init();
+  install_keyboard();
+
+  begin
+    try set_gfx_mode GFX_AUTODETECT_WINDOWED width height 0 0;
+    with _ ->
+      try set_gfx_mode GFX_SAFE width height 0 0;
+      with _ ->
+        set_gfx_mode GFX_TEXT 0 0 0 0;
+        allegro_message("Unable to set any graphic mode\n"^ (get_allegro_error()) ^"\n");
+        exit 1;
+  end;
+
+  set_palette(get_desktop_palette());
+
+  let screen = get_screen() in
+  clear_to_color screen (makecol 0 0 0);
+
+  (* you don't need to do this, but on some platforms (eg. Windows) things
+   * will be drawn more quickly if you always acquire the screen before
+   * trying to draw onto it.
+   *)
+  acquire_screen();
+
+  let (screen_w, screen_h) = get_screen_width(), get_screen_height() in
+
+  (* hello world *)
+  textout_centre_ex screen (get_font()) "Hello, world!" (screen_w/2) (screen_h/2) (makecol 100 100 100) (color_index(-1));
+
+  release_screen();
+
+  ignore(readkey());
