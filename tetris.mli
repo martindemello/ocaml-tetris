@@ -9,4 +9,3 @@ type input = Left | Right | Rotate | Rotate' | Down | Drop | Pause | Quit
 val default_configuration : configuration
 val pixel_dimensions : configuration -> int * int
 val initial_state : configuration -> state
-val transition : configuration -> state -> float -> Human.Keypad.event option -> Display.command list * float option
