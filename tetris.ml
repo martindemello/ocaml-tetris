@@ -575,8 +575,6 @@ let () =
 
   acquire_screen();
 
-  let (screen_w, screen_h) = get_screen_width(), get_screen_height() in
-
   for i = 0 to cfg.m do
     for j = 0 to cfg.n do
       let col = (makecol 100 100 100) in
@@ -584,9 +582,6 @@ let () =
       rectfill screen x1 y1 x2 y2 col
     done
   done;
-
-  (* hello world *)
-  textout_centre_ex screen (get_font()) "Hello, world!" (screen_w/2) (screen_h/2) (makecol 100 100 100) (color_index(-1));
 
   release_screen();
 
