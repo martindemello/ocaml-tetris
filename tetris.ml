@@ -174,9 +174,21 @@ let update_board c q t k =
 	 q.board.(i).(j) <> None)
   in
   let might_occupy t i j = List.for_all (fun (di,dj) -> not (occupied (i + di) (j + dj))) (stones_of_tile t) in
+  let blit_stone t i j c =
+	List.iter (fun (di,dj) -> q.board.(i + di).(j + dj) <- c) (stones_of_tile t)
+  in
   let carve_stone t i j =
 	let c = Color.Shade((Random.float (2.0 *. shade_variation)) -. shade_variation, Color.Dark(color_of_tile t)) in
-	List.iter (fun (di,dj) -> q.board.(i + di).(j + dj) <- Some c) (stones_of_tile t)
+    blit_stone t i j (Some c)
+  in
+  let place t =
+	let (i,j) = q.position in
+    let c = color_of_tile t in
+    blit_stone t i j (Some c)
+  in
+  let remove t =
+	let (i,j) = q.position in
+    blit_stone t i j None
   in
   let next_tile () =
 	q.present <- q.future;
@@ -284,11 +296,14 @@ let update_board c q t k =
   | (_,Some Pause) ->
 	  q.what <- Paused q.what;
   | (Falling x,Some Drop) ->
+      remove q.present;
       while not (move_piece 1 k) do
         ()
       done;
+      place q.present;
       reached_bottom ()
   | (Falling x,_) ->
+      remove q.present;
 	  let di = match k with Some Down -> 1 | _ -> 0 in
 	  begin
 		match k with
@@ -299,7 +314,8 @@ let update_board c q t k =
 	  if t < x then
 		if move_piece (max 0 di) k then reached_bottom () else as_usual (x -. t)
 	  else
-		if move_piece 1 k then reached_bottom () else as_usual q.delay
+        if move_piece 1 k then reached_bottom () else as_usual q.delay;
+      place q.present;
   | (Compacting(x,l),None) ->
 	  if t < x then
 		begin
@@ -333,12 +349,14 @@ let init_screen width height =
 
 let allegro_color c =
   let (r, g, b) = Color.rgb_of_color c in
-  makecol (int_of_float r) (int_of_float g) (int_of_float b)
+  let s x = int_of_float (255.0 *. x) in
+  makecol (s r) (s g) (s b)
 
 let () =
   let cfg = default_configuration in
   let (width, height) = pixel_dimensions cfg in
   let q = initial_state cfg in
+  Random.init(1000);
   allegro_init();
   install_keyboard();
   install_timer();
@@ -348,6 +366,16 @@ let () =
 
   let screen = get_screen() in
   clear_to_color screen (makecol 0 0 0);
+
+  let s, l, r, u = Keypad.Select, Keypad.Left, Keypad.Right, Keypad.Up in
+  let x = [ s; l; l; l; s; u; r; r; r; r; s; l; l; s; r; s; l; l; l; l; l; s; s;
+  r; r; r; s; ]
+  in
+  let apply k =
+    let k = Some(Keypad.Pressed k) in
+    update_board cfg q 1.0 k;
+  in
+  List.iter apply x;
 
   acquire_screen();
 
