@@ -544,7 +544,7 @@ let transition c q t k =
 
 let corner x y = 10 + 20 * x, 10 + 20 * y
 
-let coords x y =
+let cell_boundaries x y =
   let x1, y1 = corner x y in
   x1+1, y1+1, x1+19, y1+19
 
@@ -558,6 +558,11 @@ let init_screen width height =
         allegro_message("Unable to set any graphic mode\n"^ (get_allegro_error()) ^"\n");
         exit 1;
   end
+
+
+let allegro_color c =
+  let (r, g, b) = Color.rgb_of_color c in
+  makecol (int_of_float r) (int_of_float g) (int_of_float b)
 
 let () =
   let cfg = default_configuration in
@@ -575,10 +580,13 @@ let () =
 
   acquire_screen();
 
-  for i = 0 to cfg.m do
-    for j = 0 to cfg.n do
-      let col = (makecol 100 100 100) in
-      let x1, y1, x2, y2 = coords i j in
+  for i = 0 to (cfg.m - 1) do
+    for j = 0 to (cfg.n - 1) do
+      let col = match q.board.(i).(j) with
+      | None -> (makecol 100 100 100)
+      | Some c -> allegro_color c
+      in
+      let x1, y1, x2, y2 = cell_boundaries i j in
       rectfill screen x1 y1 x2 y2 col
     done
   done;
