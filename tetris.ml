@@ -351,6 +351,24 @@ let allegro_color c =
   let (r, g, b) = Color.rgb_of_color c in
   let s x = int_of_float (255.0 *. x) in
   makecol (s r) (s g) (s b)
+;;
+
+let display_board screen cfg q =
+  acquire_screen();
+
+  for i = 0 to (cfg.m - 1) do
+    for j = 0 to (cfg.n - 1) do
+      let col = match q.board.(i).(j) with
+      | None -> (makecol 100 100 100)
+      | Some c -> allegro_color c
+      in
+      let x1, y1, x2, y2 = cell_boundaries i j in
+      rectfill screen x1 y1 x2 y2 col
+    done
+  done;
+
+  release_screen()
+;;
 
 let () =
   let cfg = default_configuration in
@@ -377,19 +395,7 @@ let () =
   in
   List.iter apply x;
 
-  acquire_screen();
+  display_board screen cfg q;
 
-  for i = 0 to (cfg.m - 1) do
-    for j = 0 to (cfg.n - 1) do
-      let col = match q.board.(i).(j) with
-      | None -> (makecol 100 100 100)
-      | Some c -> allegro_color c
-      in
-      let x1, y1, x2, y2 = cell_boundaries i j in
-      rectfill screen x1 y1 x2 y2 col
-    done
-  done;
-
-  release_screen();
 
   ignore(readkey());
