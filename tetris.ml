@@ -5,6 +5,7 @@
 
 open Human
 open Allegro
+open Printf
 
 type vector = int * int
 type rectangle = int * int * int * int
@@ -395,7 +396,33 @@ let () =
   in
   List.iter apply x;
 
-  display_board screen cfg q;
+  let quit = ref false in
+  let c = ref 0 in
+  while not(!quit) do
+    while keypressed() do
+      let k = match readkey_scancode() with
+      | KEY_UP    -> Some(Keypad.Pressed Keypad.Left)
+      | KEY_DOWN  -> Some(Keypad.Pressed Keypad.Right)
+      | KEY_LEFT  -> Some(Keypad.Pressed Keypad.Up)
+      | KEY_RIGHT -> Some(Keypad.Pressed Keypad.Down)
+      | KEY_ESC   -> Some(Keypad.Pressed Keypad.A)
+      | KEY_SPACE -> Some(Keypad.Pressed Keypad.Select)
+      | _         -> None
+      in
+      let t = retrace_count() - !c in
+      let tau = (float_of_int t) /. 70.0 in
+      update_board cfg q tau k;
+      display_board screen cfg q;
+      if tau > cfg.fall_delay then c := retrace_count();
+      if k = Some(Keypad.Pressed Keypad.A) then quit := true;
+    done;
+    let t = retrace_count() - !c in
+    let tau = (float_of_int t) /. 70.0 in
+    if tau > cfg.fall_delay then
+      begin
+        update_board cfg q tau None;
+        display_board screen cfg q;
+        c := retrace_count();
+      end
 
-
-  ignore(readkey());
+  done;
