@@ -137,17 +137,6 @@ let sf = Printf.sprintf
 let debug msg = Printf.eprintf "debug: %s\n" msg; flush stderr
 
 let update_board c q t k =
-  let k = match k with
-  | Some(Keypad.Pressed Keypad.Left) -> Some(Left)
-  | Some(Keypad.Pressed Keypad.Right) -> Some(Right)
-  | Some(Keypad.Pressed Keypad.Down) -> Some(Down)
-  | Some(Keypad.Pressed Keypad.Up) -> Some(Rotate)
-  | Some(Keypad.Pressed Keypad.Start) -> Some(Pause)
-  | Some(Keypad.Pressed Keypad.L) -> Some(Down)
-  | Some(Keypad.Pressed Keypad.R) -> Some(Down)
-  | Some(Keypad.Pressed Keypad.Select) -> Some(Drop)
-  | _ -> None
-  in
   let reset_game () =
 	q.what <- Falling c.fall_delay;
 	for i = 0 to c.m - 1 do
@@ -377,27 +366,18 @@ let () =
   let screen = get_screen() in
   clear_to_color screen (makecol 0 0 0);
 
-  let s, l, r, u = Keypad.Select, Keypad.Left, Keypad.Right, Keypad.Up in
-  let x = [ s; l; l; l; s; u; r; r; r; r; s; l; l; s; r; s; l; l; l; l; l; s; s;
-  r; r; r; s; ]
-  in
-  let apply k =
-    let k = Some(Keypad.Pressed k) in
-    update_board cfg q 1.0 k;
-  in
-  List.iter apply x;
-
   let quit = ref false in
   let c = ref 0 in
   while not(!quit) do
     while keypressed() do
       let k = match readkey_scancode() with
-      | KEY_UP    -> Some(Keypad.Pressed Keypad.Up)
-      | KEY_DOWN  -> Some(Keypad.Pressed Keypad.Down)
-      | KEY_LEFT  -> Some(Keypad.Pressed Keypad.Left)
-      | KEY_RIGHT -> Some(Keypad.Pressed Keypad.Right)
-      | KEY_ESC   -> Some(Keypad.Pressed Keypad.A)
-      | KEY_SPACE -> Some(Keypad.Pressed Keypad.Select)
+      | KEY_UP    -> Some(Rotate)
+      | KEY_DOWN  -> Some(Down)
+      | KEY_LEFT  -> Some(Left)
+      | KEY_RIGHT -> Some(Right)
+      | KEY_ESC   -> Some(Quit)
+      | KEY_SPACE -> Some(Drop)
+      | KEY_P     -> Some(Pause)
       | _         -> None
       in
       let t = retrace_count() - !c in
@@ -405,7 +385,7 @@ let () =
       update_board cfg q tau k;
       display_board screen cfg q;
       if tau > cfg.fall_delay then c := retrace_count();
-      if k = Some(Keypad.Pressed Keypad.A) then quit := true;
+      if k = Some(Quit) then quit := true;
     done;
     let t = retrace_count() - !c in
     let tau = (float_of_int t) /. 70.0 in
@@ -415,5 +395,4 @@ let () =
         display_board screen cfg q;
         c := retrace_count();
       end
-
   done;
