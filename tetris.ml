@@ -38,7 +38,7 @@ let default_configuration = {
   fall_delay = 0.200 (* s *)
 }
 
-let pixel_dimensions c = (2 * c.m * c.p + 200, c.n * c.q + 200)
+let pixel_dimensions c = (c.m * c.p + 50, c.n * c.q + 200)
 
 (* let fall_delay = 0.1250000 (* s *) *)
 let compact_delay = 0.250 (* s *)
@@ -53,17 +53,8 @@ type control = Paused of control | Dead | Falling of float | Compacting of float
 let clockwise = function R0 -> R1 | R1 -> R2 | R2 -> R3 | R3 -> R0
 let counter_clockwise = function R0 -> R3 | R1 -> R0 | R2 -> R1 | R3 -> R2
 	
-(* A
-   BC
- 
-    C
-   AB
-
-   CB
-    A
-
-   BA
-   C *)
+(* A     C    CB    BA
+   BC   AB     A    C   *)
 
 (*
 	| Z  -> [0,0;0,1;1,1;1,2]
@@ -330,7 +321,7 @@ let update_board c q t k =
   | (Dead,_) -> ()
 
 
-let corner x y = 10 + 20 * x, 10 + 20 * y
+let corner x y = 10 + 20 * y, 10 + 20 * x
 
 let cell_boundaries x y =
   let x1, y1 = corner x y in
@@ -373,7 +364,7 @@ let display_board screen cfg q =
 
 let () =
   let cfg = default_configuration in
-  let (width, height) = pixel_dimensions cfg in
+  let (height, width) = pixel_dimensions cfg in
   let q = initial_state cfg in
   Random.init(1000);
   allegro_init();
@@ -401,10 +392,10 @@ let () =
   while not(!quit) do
     while keypressed() do
       let k = match readkey_scancode() with
-      | KEY_UP    -> Some(Keypad.Pressed Keypad.Left)
-      | KEY_DOWN  -> Some(Keypad.Pressed Keypad.Right)
-      | KEY_LEFT  -> Some(Keypad.Pressed Keypad.Up)
-      | KEY_RIGHT -> Some(Keypad.Pressed Keypad.Down)
+      | KEY_UP    -> Some(Keypad.Pressed Keypad.Up)
+      | KEY_DOWN  -> Some(Keypad.Pressed Keypad.Down)
+      | KEY_LEFT  -> Some(Keypad.Pressed Keypad.Left)
+      | KEY_RIGHT -> Some(Keypad.Pressed Keypad.Right)
       | KEY_ESC   -> Some(Keypad.Pressed Keypad.A)
       | KEY_SPACE -> Some(Keypad.Pressed Keypad.Select)
       | _         -> None
