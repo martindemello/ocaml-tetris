@@ -44,7 +44,7 @@ let pixel_dimensions c = (c.m * c.p + 50, c.n * c.q + 200)
 
 (* let fall_delay = 0.1250000 (* s *) *)
 let compact_delay = 0.250 (* s *)
-let shade_variation = 0.300
+let shade_variation = 0.100
 
 type input = Left | Right | Rotate | Rotate' | Down | Drop | Pause | Quit
 type tile = L | L' | Z | Z' | O | I | T
@@ -152,8 +152,7 @@ let reset_board c q =
   q.position <- (1,c.n/2)
 
 let filled c q i =
-  let rec check i j = j = c.n or (q.board.(i).(j) <> None && check i (j + 1)) in
-  check i 0
+  Enum.for_all (fun (j) -> q.board.(i).(j) <> None) (0 -- (c.n - 1))
 
 let compact_board c q =
   let keep_rows = [? List: i | i <- (c.m - 1) --- 0 ; not(filled c q i) ?] in
@@ -234,33 +233,25 @@ let update_board c q t k =
     let (i,j) = q.position in
     carve_stone q.present i j;
     (* check if any lines are completed *)
-    let rec loop r i =
-    if i = c.m then
-      r
-    else
-      if filled c q i then
-      loop (i::r) (i + 1)
-      else
-      loop r (i + 1)
-    in
-    match loop [] 0 with
+    let filled_rows = [? List: i | i <- (c.m - 1) --- 0 ; filled c q i ?] in
+    match filled_rows with
     | [] -> next_tile ()
     | l ->
           let r = List.length l in
           q.lines <- r + q.lines;
           q.score <- r * r + q.score;
-      q.what <- Compacting(compact_delay,l);
+          q.what <- Compacting(compact_delay,l);
   end
   in
   let as_usual t = q.what <- Falling(t) in
   let attempt_to_rotate_piece ccw =
-  let (r,t) = q.present in
-  let r' = if ccw then counter_clockwise r else clockwise r in
-  let (i,j) = q.position in
-  if might_occupy (r',t) i j then
-    q.present <- (r',t)
-  else
-    ()
+    let (r,t) = q.present in
+    let r' = if ccw then counter_clockwise r else clockwise r in
+    let (i,j) = q.position in
+    if might_occupy (r',t) i j then
+      q.present <- (r',t)
+    else
+      ()
   in
   match (q.what,k) with
   | (Paused c,Some Pause) -> q.what <- c;
@@ -289,11 +280,9 @@ let update_board c q t k =
         place q.present
   | (Compacting(x,l),None) ->
     if t < x then
-    begin
-      q.what <- Compacting(x -. t,l);
-    end
+      q.what <- Compacting(x -. t,l)
     else
-    do_compaction ()
+      do_compaction ()
   | (Compacting(_,_),_) -> do_compaction ()
   | (Dead,Some Drop) -> reset_board c q;
   | (Dead,_) -> ()
@@ -345,6 +334,7 @@ let () =
   let (height, width) = pixel_dimensions cfg in
   let q = initial_state cfg in
   Random.init(1000);
+
   allegro_init();
   install_keyboard();
   install_timer();
@@ -357,6 +347,10 @@ let () =
 
   let quit = ref false in
   let c = ref 0 in
+  let get_timer () =
+    let t = retrace_count() - !c in
+    (float_of_int t) /. 70.0
+  in
   while not(!quit) do
     while keypressed() do
       let k = match readkey_scancode() with
@@ -369,15 +363,13 @@ let () =
       | KEY_P     -> Some(Pause)
       | _         -> None
       in
-      let t = retrace_count() - !c in
-      let tau = (float_of_int t) /. 70.0 in
+      let tau = get_timer() in
       update_board cfg q tau k;
       display_board screen cfg q;
       if tau > cfg.fall_delay then c := retrace_count();
       if k = Some(Quit) then quit := true;
     done;
-    let t = retrace_count() - !c in
-    let tau = (float_of_int t) /. 70.0 in
+    let tau = get_timer() in
     if tau > cfg.fall_delay then
       begin
         update_board cfg q tau None;
