@@ -1,3 +1,4 @@
+(*pp $PP *)
 (* Tetris *)
 (* $Id: tetris.ml,v 1.4 2003/11/18 22:51:09 berke Exp $ *)
 (* vim:set ts=4: *)
@@ -6,6 +7,7 @@
 open Human
 open Allegro
 open Printf
+open Batteries
 
 type vector = int * int
 type rectangle = int * int * int * int
@@ -154,30 +156,15 @@ let filled c q i =
   check i 0
 
 let compact_board c q =
-  let rec loop r i =
-    if i = c.m then
-      r
-  else
-    if filled c q i then
-      loop r (i + 1)
-    else
-      loop (i::r) (i + 1)
+  let keep_rows = [? List: i | i <- (c.m - 1) --- 0 ; not(filled c q i) ?] in
+  let fill_empty i = Array.fill q.board.(i - 1) 0 c.n None in
+  let rec compact i = function
+    | i'::r ->
+        Array.blit q.board.(i') 0 q.board.(i - 1) 0 c.n;
+        compact (i - 1) r
+    | [] -> Enum.iter fill_empty (i --- 1)
   in
-  let rec loop' i = function
-    i'::r ->
-      Array.blit q.board.(i') 0 q.board.(i - 1) 0 c.n;
-      loop' (i - 1) r
-    | [] -> loop'' i
-  and loop'' i =
-    if i = 0 then
-      ()
-    else
-      begin
-        Array.fill q.board.(i - 1) 0 c.n None;
-        loop'' (i - 1)
-    end
-  in
-  loop' c.m (loop [] 0)
+  compact c.m keep_rows
 
 (* vary the colour of a tile slightly when it's done falling *)
 let varied_color tile =
@@ -311,6 +298,7 @@ let update_board c q t k =
   | (Dead,Some Drop) -> reset_board c q;
   | (Dead,_) -> ()
 
+(* graphics *)
 let corner x y = 10 + 20 * y, 10 + 20 * x
 
 let cell_boundaries x y =
