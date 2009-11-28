@@ -136,79 +136,29 @@ let initial_state c = {
 let sf = Printf.sprintf
 let debug msg = Printf.eprintf "debug: %s\n" msg; flush stderr
 
-let update_board c q t k =
-  let reset_game () =
+let reset_board c q =
   q.what <- Falling c.fall_delay;
   for i = 0 to c.m - 1 do
     for j = 0 to c.n - 1 do
       q.board.(i).(j) <- None
     done
-    done;
-    q.score <- 0;
-    q.lines <- 0;
-    q.future <- random_tile ();
-    q.present <- random_tile ();
-    q.position <- (1,c.n/2)
-  in
-  let occupied i j =
-  (i < 0 or j < 0 or i >= c.m or j >= c.n or
-   q.board.(i).(j) <> None)
-  in
-  let might_occupy t i j = List.for_all (fun (di,dj) -> not (occupied (i + di) (j + dj))) (stones_of_tile t) in
-  let blit_stone t i j c =
-  List.iter (fun (di,dj) -> q.board.(i + di).(j + dj) <- c) (stones_of_tile t)
-  in
-  let carve_stone t i j =
-  let c = Color.Shade((Random.float (2.0 *. shade_variation)) -. shade_variation, Color.Dark(color_of_tile t)) in
-    blit_stone t i j (Some c)
-  in
-  let place t =
-  let (i,j) = q.position in
-    let c = color_of_tile t in
-    blit_stone t i j (Some c)
-  in
-  let remove t =
-  let (i,j) = q.position in
-    blit_stone t i j None
-  in
-  let next_tile () =
-  q.present <- q.future;
+  done;
+  q.score <- 0;
+  q.lines <- 0;
   q.future <- random_tile ();
-  let (i,j) = (1,c.n/2) in
-  q.position <- (i,j);
-  if might_occupy q.present i j then
-      q.what <- Falling(q.delay)
-  else
-      q.what <- Dead
-  in
-  (* move the piece one position down *)
-  (* returns true iff no restriction on horizontal motion could give a valid position, i.e. bottom was reached *)
-  let move_piece di k =
-  (* piece falls *)
-  (* decrease by one *)
-  let (i,j) = q.position in
-  let i = i + di in
-  let (i,j) =
-    match k with
-    Some Left when might_occupy q.present i (j - 1) -> (i,j - 1)
-    | Some Right when might_occupy q.present i (j + 1) -> (i,j + 1)
-    | _ -> (i,j)
-  in
-  if might_occupy q.present i j then
-    begin
-    q.position <- (i,j);
-    false
-    end
-  else
-    true
-  in
+  q.present <- random_tile ();
+  q.position <- (1,c.n/2)
+
+let filled c q i =
   let rec check i j = j = c.n or (q.board.(i).(j) <> None && check i (j + 1)) in
-  let do_compaction () =
+  check i 0
+
+let compact_board c q =
   let rec loop r i =
     if i = c.m then
-    r
-    else
-    if check i 0 then
+      r
+  else
+    if filled c q i then
       loop r (i + 1)
     else
       loop (i::r) (i + 1)
@@ -220,15 +170,76 @@ let update_board c q t k =
     | [] -> loop'' i
   and loop'' i =
     if i = 0 then
-    ()
+      ()
     else
-    begin
-      Array.fill q.board.(i - 1) 0 c.n None;
-      loop'' (i - 1)
+      begin
+        Array.fill q.board.(i - 1) 0 c.n None;
+        loop'' (i - 1)
     end
   in
-  loop' c.m (loop [] 0);
-  next_tile ()
+  loop' c.m (loop [] 0)
+
+(* vary the colour of a tile slightly when it's done falling *)
+let varied_color tile =
+  Color.Shade(
+    (Random.float (2.0 *. shade_variation)) -. shade_variation,
+    Color.Dark(color_of_tile tile))
+
+let update_board c q t k =
+  let occupied i j =
+    (i < 0 or j < 0 or i >= c.m or j >= c.n or q.board.(i).(j) <> None)
+  in
+  let might_occupy t i j = List.for_all (fun (di,dj) -> not (occupied (i + di) (j + dj))) (stones_of_tile t) in
+  let blit_stone t i j c =
+    List.iter (fun (di,dj) -> q.board.(i + di).(j + dj) <- c) (stones_of_tile t)
+  in
+  let carve_stone t i j =
+    let c = varied_color t in
+    blit_stone t i j (Some c)
+  in
+  let place t =
+    let (i,j) = q.position in
+    let c = color_of_tile t in
+    blit_stone t i j (Some c)
+  in
+  let remove t =
+    let (i,j) = q.position in
+    blit_stone t i j None
+  in
+  let next_tile () =
+    q.present <- q.future;
+    q.future <- random_tile ();
+    let (i,j) = (1,c.n/2) in
+    q.position <- (i,j);
+    if might_occupy q.present i j then
+      q.what <- Falling(q.delay)
+    else
+      q.what <- Dead
+  in
+  (* move the piece one position down *)
+  (* returns true iff no restriction on horizontal motion could give a valid position, i.e. bottom was reached *)
+  let move_piece di k =
+    (* piece falls *)
+    (* decrease by one *)
+    let (i,j) = q.position in
+    let i = i + di in
+    let (i,j) =
+      match k with
+      | Some Left  when might_occupy q.present i (j - 1) -> (i, j - 1)
+      | Some Right when might_occupy q.present i (j + 1) -> (i, j + 1)
+      | _ -> (i,j)
+    in
+    if might_occupy q.present i j then
+      begin
+        q.position <- (i,j);
+        false
+      end
+    else
+      true
+  in
+  let do_compaction () =
+    compact_board c q;
+    next_tile ()
   in
   let reached_bottom () =
     (* piece reached bottom *)
@@ -240,7 +251,7 @@ let update_board c q t k =
     if i = c.m then
       r
     else
-      if check i 0 then
+      if filled c q i then
       loop (i::r) (i + 1)
       else
       loop r (i + 1)
@@ -254,9 +265,7 @@ let update_board c q t k =
       q.what <- Compacting(compact_delay,l);
   end
   in
-  let as_usual t =
-  q.what <- Falling(t);
-  in
+  let as_usual t = q.what <- Falling(t) in
   let attempt_to_rotate_piece ccw =
   let (r,t) = q.present in
   let r' = if ccw then counter_clockwise r else clockwise r in
@@ -267,11 +276,9 @@ let update_board c q t k =
     ()
   in
   match (q.what,k) with
-  | (Paused c,Some Pause) ->
-    q.what <- c;
+  | (Paused c,Some Pause) -> q.what <- c;
   | (Paused _,_) -> ()
-  | (_,Some Pause) ->
-    q.what <- Paused q.what;
+  | (_,Some Pause) -> q.what <- Paused q.what;
   | (Falling x,Some Drop) ->
       remove q.present;
       while not (move_piece 1 k) do
@@ -281,18 +288,18 @@ let update_board c q t k =
       reached_bottom ()
   | (Falling x,_) ->
       remove q.present;
-    let di = match k with Some Down -> 1 | _ -> 0 in
-    begin
-    match k with
-      Some Rotate -> attempt_to_rotate_piece true
-    | Some Rotate' -> attempt_to_rotate_piece false
-    | _ -> ()
-    end;
-    if t < x then
-    if move_piece (max 0 di) k then reached_bottom () else as_usual (x -. t)
-    else
+      let di = match k with Some Down -> 1 | _ -> 0 in
+      begin
+        match k with
+        | Some Rotate  -> attempt_to_rotate_piece true
+        | Some Rotate' -> attempt_to_rotate_piece false
+        | _ -> ()
+      end;
+      if t < x then
+        if move_piece (max 0 di) k then reached_bottom () else as_usual (x -. t)
+      else
         if move_piece 1 k then reached_bottom () else as_usual q.delay;
-      place q.present;
+        place q.present
   | (Compacting(x,l),None) ->
     if t < x then
     begin
@@ -301,10 +308,8 @@ let update_board c q t k =
     else
     do_compaction ()
   | (Compacting(_,_),_) -> do_compaction ()
-  | (Dead,Some Drop) ->
-    reset_game ();
+  | (Dead,Some Drop) -> reset_board c q;
   | (Dead,_) -> ()
-
 
 let corner x y = 10 + 20 * y, 10 + 20 * x
 
