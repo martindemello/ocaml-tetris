@@ -229,19 +229,19 @@ let update_board c q t k =
   in
   let reached_bottom () =
     (* piece reached bottom *)
-  begin
-    let (i,j) = q.position in
-    carve_stone q.present i j;
-    (* check if any lines are completed *)
-    let filled_rows = [? List: i | i <- (c.m - 1) --- 0 ; filled c q i ?] in
-    match filled_rows with
-    | [] -> next_tile ()
-    | l ->
+    begin
+      let (i,j) = q.position in
+      carve_stone q.present i j;
+      (* check if any lines are completed *)
+      let filled_rows = [? List: i | i <- (c.m - 1) --- 0 ; filled c q i ?] in
+      match filled_rows with
+      | [] -> next_tile ()
+      | l ->
           let r = List.length l in
           q.lines <- r + q.lines;
           q.score <- r * r + q.score;
           q.what <- Compacting(compact_delay,l);
-  end
+    end
   in
   let as_usual t = q.what <- Falling(t) in
   let attempt_to_rotate_piece ccw =
@@ -249,43 +249,55 @@ let update_board c q t k =
     let r' = if ccw then counter_clockwise r else clockwise r in
     let (i,j) = q.position in
     if might_occupy (r',t) i j then
-      q.present <- (r',t)
+      begin
+        q.present <- (r',t);
+        true
+      end
     else
-      ()
+      false
   in
   match (q.what,k) with
-  | (Paused c,Some Pause) -> q.what <- c;
-  | (Paused _,_) -> ()
-  | (_,Some Pause) -> q.what <- Paused q.what;
+  | (Paused c,Some Pause) -> q.what <- c; true
+  | (Paused _,_) -> false
+  | (_,Some Pause) -> q.what <- Paused q.what; true
   | (Falling x,Some Drop) ->
       remove q.present;
       while not (move_piece 1 k) do
         ()
       done;
       place q.present;
-      reached_bottom ()
+      reached_bottom ();
+      true
   | (Falling x,_) ->
+      let flag = ref false in
       remove q.present;
       let di = match k with Some Down -> 1 | _ -> 0 in
       begin
         match k with
-        | Some Rotate  -> attempt_to_rotate_piece true
-        | Some Rotate' -> attempt_to_rotate_piece false
+        | Some Rotate  -> flag := attempt_to_rotate_piece true
+        | Some Rotate' -> flag := attempt_to_rotate_piece false
         | _ -> ()
       end;
+      let oldi, oldj = q.position in
       if t < x then
-        if move_piece (max 0 di) k then reached_bottom () else as_usual (x -. t)
+        if move_piece di k then reached_bottom () else as_usual (x -. t)
       else
         if move_piece 1 k then reached_bottom () else as_usual q.delay;
-        place q.present
+      if (oldi, oldj) <> q.position then flag := true;
+      place q.present;
+      !flag
   | (Compacting(x,l),None) ->
     if t < x then
-      q.what <- Compacting(x -. t,l)
+      begin
+        q.what <- Compacting(x -. t,l); false
+      end
     else
-      do_compaction ()
-  | (Compacting(_,_),_) -> do_compaction ()
-  | (Dead,Some Drop) -> reset_board c q;
-  | (Dead,_) -> ()
+      begin
+        do_compaction (); true
+      end
+  | (Compacting(_,_),_) -> do_compaction (); true
+  | (Dead,Some Drop) -> reset_board c q; true
+  | (Dead,_) -> false
 
 (* graphics *)
 let corner x y = 10 + 20 * y, 10 + 20 * x
@@ -364,16 +376,17 @@ let () =
       | _         -> None
       in
       let tau = get_timer() in
-      update_board cfg q tau k;
-      display_board screen cfg q;
+      if update_board cfg q tau k then
+        display_board screen cfg q;
+      c := retrace_count();
       if tau > cfg.fall_delay then c := retrace_count();
       if k = Some(Quit) then quit := true;
     done;
     let tau = get_timer() in
-    if tau > cfg.fall_delay then
+    if tau > 0.1 then
       begin
-        update_board cfg q tau None;
-        display_board screen cfg q;
+        if update_board cfg q tau None then
+          display_board screen cfg q;
         c := retrace_count();
       end
   done;
