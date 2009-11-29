@@ -40,19 +40,3 @@ module Color =
 		  else
 			mix x (1.0,1.0,1.0) (rgb_of_color c)
   end
-
-module Display =
-  struct
-	type command =
-		Fill_rectangle of Color.t * int * int * int * int
-	  | Draw_string of Color.t * int * int * string
-  end
-
-module Keypad =
-  struct
-	type t =
-		Left | Right | Up | Down |
-		A | B | Start | Select | L | R
-	type event = Pressed of t | Released of t
-  end
-
