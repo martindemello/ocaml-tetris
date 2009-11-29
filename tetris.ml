@@ -400,5 +400,6 @@ let () =
         if update_board cfg q tau None then
           display_board screen cfg q;
         c := retrace_count();
-      end
+      end;
+    rest 10
   done;
