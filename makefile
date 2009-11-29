@@ -7,10 +7,9 @@ PPFLAGS = \
 	-I `ocamlfind -query batteries.pa_where` pa_where.cmo
 
 RESULT = tetris
-SOURCES = human.ml game.ml tetris.ml
+SOURCES = human.ml tetris.ml
 
-GODI = /home/martin/opt/godi/lib/ocaml
-PACKS = unix graphics allegro batteries
+PACKS = allegro batteries
 CREATE_LIB = yes
 
 OCAMLMAKEFILE = OCamlMakefile
