@@ -165,6 +165,15 @@ let compact_board c q =
   in
   compact c.m keep_rows
 
+let shade_compacting c q =
+  let grey = Color.Dark(Color.White) in
+  let filled = [? List: i | i <- (c.m - 1) --- 0 ; filled c q i ?] in
+  let darken = function None -> None | Some c -> Some(Color.Mix(c, 0.7, grey)) in
+  let darken_line i =
+    Enum.iter (fun j -> q.board.(i).(j) <- darken q.board.(i).(j)) (0 -- (c.n - 1))
+  in
+  List.iter darken_line filled
+
 (* vary the colour of a tile slightly when it's done falling *)
 let varied_color tile =
   Color.Shade(
@@ -289,7 +298,9 @@ let update_board c q t k =
   | (Compacting(x,l),None) ->
     if t < x then
       begin
-        q.what <- Compacting(x -. t,l); false
+        q.what <- Compacting(x -. t,l);
+        shade_compacting c q;
+        true
       end
     else
       begin
