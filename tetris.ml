@@ -2,7 +2,8 @@
 (* Tetris *)
 (* $Id: tetris.ml,v 1.4 2003/11/18 22:51:09 berke Exp $ *)
 (* vim:set ts=4: *)
-(* By Oguz Berke DURAK *)
+(* By Martin DeMello *)
+(* based on mltetris by Oguz Berke DURAK *)
 
 open Human
 open Allegro
