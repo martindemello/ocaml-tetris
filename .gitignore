@@ -1,0 +1,7 @@
+*.swp
+*.cmo
+*.cmi
+*.cmx
+tetris
+*.o
+*.mlgi
