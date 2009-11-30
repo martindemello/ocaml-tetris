@@ -41,7 +41,7 @@ let default_configuration = {
   fall_delay = 0.200 (* s *)
 }
 
-let pixel_dimensions c = (c.m * c.p + 50, c.n * c.q + 200)
+let pixel_dimensions c = (c.m * c.p, c.n * c.q)
 
 (* let fall_delay = 0.1250000 (* s *) *)
 let compact_delay = 0.250 (* s *)
@@ -242,6 +242,7 @@ let update_board c q t k =
     begin
       let (i,j) = q.position in
       carve_stone q.present i j;
+      q.score <- 1 + q.score;
       (* check if any lines are completed *)
       let filled_rows = [? List: i | i <- (c.m - 1) --- 0 ; filled c q i ?] in
       match filled_rows with
@@ -336,11 +337,11 @@ let allegro_color c =
   makecol (s r) (s g) (s b)
 ;;
 
-let display_board screen cfg q =
+let display_board screen c q =
   acquire_screen();
 
-  for i = 0 to (cfg.m - 1) do
-    for j = 0 to (cfg.n - 1) do
+  for i = 0 to (c.m - 1) do
+    for j = 0 to (c.n - 1) do
       let col = match q.board.(i).(j) with
       | None -> (makecol 100 100 100)
       | Some c -> allegro_color c
@@ -350,12 +351,21 @@ let display_board screen cfg q =
     done
   done;
 
+  let (h, w) = pixel_dimensions c in
+  let (ty, tx) = (50, w + 50) in
+  let font = get_font() in
+  let fg, bg = (allegro_color Color.White), (allegro_color Color.Black) in
+  rectfill screen tx ty (tx+100) (ty+64) bg;
+  textprintf_ex screen font tx ty fg bg "Score: %d" q.score;
+  textprintf_ex screen font tx (ty + 32) fg bg "Lines: %d" q.lines;
   release_screen()
 ;;
 
 let () =
   let cfg = default_configuration in
-  let (height, width) = pixel_dimensions cfg in
+  let (h, w) = pixel_dimensions cfg in
+  let (height, width) = (h + 50, w + 200) in
+
   let q = initial_state cfg in
   Random.init(1000);
 
