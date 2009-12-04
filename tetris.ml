@@ -1,11 +1,9 @@
 (*pp $PP *)
-(* Tetris *)
-(* $Id: tetris.ml,v 1.4 2003/11/18 22:51:09 berke Exp $ *)
-(* vim:set ts=4: *)
-(* By Martin DeMello *)
+(* An implementation of tetris using allegro-ocaml *)
+(* By Martin DeMello <martindemello@gmail.com> *)
 (* based on mltetris by Oguz Berke DURAK *)
 
-open Human
+open Color
 open Allegro
 open Printf
 open Batteries
@@ -37,7 +35,7 @@ let shade_variation = 0.100
 type input = Left | Right | Rotate | Rotate' | Down | Drop | Pause | Quit
 type tile = L | L' | Z | Z' | O | I | T
 type rotation = R0 | R1 | R2 | R3
-type stone = Human.Color.t option
+type stone = Color.t option
 type control = Paused of control | Dead | Falling of float | Compacting of float * int list
 
 let clockwise = function R0 -> R1 | R1 -> R2 | R2 -> R3 | R3 -> R0

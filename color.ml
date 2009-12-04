@@ -1,8 +1,3 @@
-(* Human *)
-(* $Id: human.ml,v 1.3 2003/11/18 22:51:09 berke Exp $ *)
-(* vim:set ts=4: *)
-(* By Oguz Berke DURAK *)
-
 module Color =
   struct
     type t =

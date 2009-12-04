@@ -7,7 +7,7 @@ PPFLAGS = \
 	-I `ocamlfind -query batteries.pa_where` pa_where.cmo
 
 RESULT = tetris
-SOURCES = human.ml tetris.ml
+SOURCES = color.ml tetris.ml
 
 PACKS = allegro batteries
 CREATE_LIB = yes
