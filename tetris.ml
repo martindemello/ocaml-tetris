@@ -18,12 +18,6 @@ type configuration = {
   n : int;
   p : int;
   q : int;
-  i0 : int;
-  j0 : int;
-  f_i0 : int;
-  f_j0 : int;
-  s_i0 : int;
-  s_j0 : int;
   fall_delay : float
 }
 
@@ -32,12 +26,6 @@ let default_configuration = {
   n = 10;
   p = 20;
   q = 20;
-  i0 = 0;
-  j0 = 0;
-  f_i0 = 50;
-  f_j0 = 300;
-  s_i0 = 100;
-  s_j0 = 300;
   fall_delay = 0.200 (* s *)
 }
 
