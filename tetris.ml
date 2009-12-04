@@ -14,9 +14,9 @@ type vector = int * int
 type rectangle = int * int * int * int
 
 type configuration = {
-  m : int;
+  m : int; (* pit dimensions in blocks *)
   n : int;
-  p : int;
+  p : int; (* block dimensions in pixels *)
   q : int;
   fall_delay : float
 }
@@ -31,7 +31,6 @@ let default_configuration = {
 
 let pixel_dimensions c = (c.m * c.p, c.n * c.q)
 
-(* let fall_delay = 0.1250000 (* s *) *)
 let compact_delay = 0.250 (* s *)
 let shade_variation = 0.100
 
@@ -97,6 +96,7 @@ type state = {
   board : stone array array;
   mutable score : int;
   mutable lines : int;
+  mutable level : int;
   mutable future : rotation * tile;
   mutable present : rotation * tile;
   mutable position : int * int; (* position of present tile, must be consistent with board *)
@@ -113,6 +113,7 @@ let initial_state c = {
   board = Array.make_matrix c.m c.n None;
   score = 0;
   lines = 0;
+  level = 0;
   future = random_tile ();
   present = random_tile ();
   position = (1,c.n/2);
@@ -127,6 +128,8 @@ let initial_state c = {
 let sf = Printf.sprintf
 let debug msg = Printf.eprintf "debug: %s\n" msg; flush stderr
 
+let level_delay c q = (0.9 ** (float_of_int q.level)) *. c.fall_delay
+
 let reset_board c q =
   q.what <- Falling c.fall_delay;
   for i = 0 to c.m - 1 do
@@ -136,6 +139,8 @@ let reset_board c q =
   done;
   q.score <- 0;
   q.lines <- 0;
+  q.level <- 0;
+  q.delay <- c.fall_delay;
   q.future <- random_tile ();
   q.present <- random_tile ();
   q.position <- (1,c.n/2)
@@ -240,6 +245,11 @@ let update_board c q t k =
           q.lines <- r + q.lines;
           q.score <- r * r + q.score;
           q.what <- Compacting(compact_delay,l);
+          if q.lines > 10 + q.level * 10 then
+            begin
+              q.level <- q.level + 1;
+              q.delay <- level_delay c q;
+            end
     end
   in
   let as_usual t = q.what <- Falling(t) in
@@ -346,6 +356,7 @@ let display_board screen c q =
   rectfill screen tx ty (tx+100) (ty+64) bg;
   textprintf_ex screen font tx ty fg bg "Score: %d" q.score;
   textprintf_ex screen font tx (ty + 32) fg bg "Lines: %d" q.lines;
+  textprintf_ex screen font tx (ty + 64) fg bg "Level: %d" q.level;
   release_screen()
 ;;
 
