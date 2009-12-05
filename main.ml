@@ -95,6 +95,12 @@ let () =
     let t = retrace_count() - !c in
     (float_of_int t) /. 70.0
   in
+  let update k =
+    let tau = get_timer() in
+    if update_board cfg q tau k then
+      display_board screen bg width height cfg q;
+    c := retrace_count()
+  in
   while not(!quit) do
     while keypressed() do
       let k = match readkey_scancode() with
@@ -107,19 +113,11 @@ let () =
       | KEY_P     -> Some(Pause)
       | _         -> None
       in
-      let tau = get_timer() in
-      if update_board cfg q tau k then
-        display_board screen bg width height cfg q;
-      c := retrace_count();
-      if tau > cfg.fall_delay then c := retrace_count();
+      update k;
       if k = Some(Quit) then quit := true;
     done;
     let tau = get_timer() in
-    if tau > 0.1 then
-      begin
-        if update_board cfg q tau None then
-          display_board screen bg width height cfg q;
-        c := retrace_count();
-      end;
+    if tau > 0.05 then
+      update None;
     rest 10
   done;
