@@ -56,11 +56,13 @@ let display_board screen bg w h c q =
   let (ty, tx) = (50, w + 50) in
   let font = get_font() in
   let fg, bg = (allegro_color Color.White), (allegro_color Color.Black) in
+  let bps = floor (((1.0 /.  q.delay) +. 0.5)) in
   drawing_mode DRAW_MODE_SOLID;
-  rectfill screen tx ty (tx+100) (ty+92) bg;
+  rectfill screen (tx - 10) (ty - 10) (tx+90) (ty+110) bg;
   textprintf_ex screen font tx ty fg bg "Score: %d" q.score;
   textprintf_ex screen font tx (ty + 32) fg bg "Lines: %d" q.lines;
   textprintf_ex screen font tx (ty + 64) fg bg "Level: %d" q.level;
+  textprintf_ex screen font tx (ty + 92) fg bg "Speed: %.0f" bps;
   release_screen()
 ;;
 
