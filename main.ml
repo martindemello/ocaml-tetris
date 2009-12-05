@@ -5,11 +5,9 @@ open Allegro
 let pixel_dimensions c = (c.m * c.p, c.n * c.q)
 
 (* graphics *)
-let corner x y = 10 + 20 * y, 10 + 20 * x
-
-let cell_boundaries x y =
-  let x1, y1 = corner x y in
-  x1+1, y1+1, x1+19, y1+19
+let cell_boundaries c x y =
+  let x1, y1 = 10 + c.q * x, 10 + c.p * y in
+  x1+1, y1+1, x1+c.q-1, y1+c.p-1
 
 let init_screen width height =
   begin
@@ -38,7 +36,7 @@ let display_board screen c q =
       | None -> (makecol 100 100 100)
       | Some c -> allegro_color c
       in
-      let x1, y1, x2, y2 = cell_boundaries i j in
+      let x1, y1, x2, y2 = cell_boundaries c j i in
       rectfill screen x1 y1 x2 y2 col
     done
   done;
@@ -106,4 +104,3 @@ let () =
       end;
     rest 10
   done;
-
