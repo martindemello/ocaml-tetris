@@ -20,6 +20,13 @@ let init_screen width height =
         exit 1;
   end
 
+let initbg bgfile =
+  let pal = get_desktop_palette () in
+  try load_bitmap bgfile pal
+  with _ ->
+    set_gfx_mode GFX_TEXT 0 0 0 0;
+    allegro_message("Error reading "^ bgfile ^"!\n");
+    exit 1
 
 let allegro_color c =
   let (r, g, b) = Color.rgb_of_color c in
@@ -27,15 +34,19 @@ let allegro_color c =
   makecol (s r) (s g) (s b)
 ;;
 
-let display_board screen c q =
+let display_board screen bg w h c q =
   acquire_screen();
+
+  blit bg screen 0 0 0 0 w h;
 
   for i = 0 to (c.m - 1) do
     for j = 0 to (c.n - 1) do
-      let col = match q.board.(i).(j) with
-      | None -> (makecol 100 100 100)
+      let s = q.board.(i).(j) in
+      let col = match s with
+      | None -> (makeacol 50 50 50 200)
       | Some c -> allegro_color c
       in
+      drawing_mode (match s with None -> DRAW_MODE_TRANS | _ -> DRAW_MODE_SOLID);
       let x1, y1, x2, y2 = cell_boundaries c j i in
       rectfill screen x1 y1 x2 y2 col
     done
@@ -45,7 +56,8 @@ let display_board screen c q =
   let (ty, tx) = (50, w + 50) in
   let font = get_font() in
   let fg, bg = (allegro_color Color.White), (allegro_color Color.Black) in
-  rectfill screen tx ty (tx+100) (ty+64) bg;
+  drawing_mode DRAW_MODE_SOLID;
+  rectfill screen tx ty (tx+100) (ty+92) bg;
   textprintf_ex screen font tx ty fg bg "Score: %d" q.score;
   textprintf_ex screen font tx (ty + 32) fg bg "Lines: %d" q.lines;
   textprintf_ex screen font tx (ty + 64) fg bg "Level: %d" q.level;
@@ -63,9 +75,14 @@ let () =
   allegro_init();
   install_keyboard();
   install_timer();
+  set_color_depth 32;
+  set_color_conversion COLORCONV_TOTAL;
   init_screen width height;
 
   set_palette(get_desktop_palette());
+  set_trans_blender 0 0 0 127;
+
+  let bg = initbg "bg.bmp" in
 
   let screen = get_screen() in
   clear_to_color screen (makecol 0 0 0);
@@ -90,7 +107,7 @@ let () =
       in
       let tau = get_timer() in
       if update_board cfg q tau k then
-        display_board screen cfg q;
+        display_board screen bg width height cfg q;
       c := retrace_count();
       if tau > cfg.fall_delay then c := retrace_count();
       if k = Some(Quit) then quit := true;
@@ -99,7 +116,7 @@ let () =
     if tau > 0.1 then
       begin
         if update_board cfg q tau None then
-          display_board screen cfg q;
+          display_board screen bg width height cfg q;
         c := retrace_count();
       end;
     rest 10
