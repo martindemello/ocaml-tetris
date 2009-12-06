@@ -72,7 +72,7 @@ let () =
   let (height, width) = (h + 50, w + 200) in
 
   let q = initial_state cfg in
-  Random.init(1000);
+  Random.self_init ();
 
   allegro_init();
   install_keyboard();
