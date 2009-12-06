@@ -28,6 +28,7 @@ let default_configuration = {
 
 let compact_delay = 0.250 (* s *)
 let shade_variation = 0.100
+let level_delay c level = (0.9 ** (float_of_int level)) *. c.fall_delay
 
 type input = Left | Right | Rotate | Rotate' | Down | Drop | Pause | Quit
 type tile = L | L' | Z | Z' | O | I | T
@@ -112,7 +113,7 @@ let initial_state c = {
   future = random_tile ();
   present = random_tile ();
   position = (1,c.n/2);
-  delay = c.fall_delay
+  delay = level_delay c 0
 }
 
 (* c : configuration *)
@@ -122,8 +123,6 @@ let initial_state c = {
 
 let sf = Printf.sprintf
 let debug msg = Printf.eprintf "debug: %s\n" msg; flush stderr
-
-let level_delay c q = (0.9 ** (float_of_int q.level)) *. c.fall_delay
 
 let reset_board c q =
   q.what <- Falling c.fall_delay;
@@ -243,7 +242,7 @@ let update_board c q t k =
           if q.lines > 10 + q.level * 10 then
             begin
               q.level <- q.level + 1;
-              q.delay <- level_delay c q;
+              q.delay <- level_delay c q.level;
             end
     end
   in
