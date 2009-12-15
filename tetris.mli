@@ -14,6 +14,8 @@ type configuration = {
   n : int;
   p : int; (* block dimensions in pixels *)
   q : int;
+  ph: int; (* preview dimensions in blocks *)
+  pw: int;
   fall_delay : float
 }
 

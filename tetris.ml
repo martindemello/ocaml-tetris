@@ -15,6 +15,8 @@ type configuration = {
   n : int;
   p : int; (* block dimensions in pixels *)
   q : int;
+  ph: int; (* preview dimensions in blocks *)
+  pw: int;
   fall_delay : float
 }
 
@@ -23,6 +25,8 @@ let default_configuration = {
   n = 10;
   p = 20;
   q = 20;
+  ph = 4;
+  pw = 3;
   fall_delay = 0.200 (* s *)
 }
 
@@ -108,19 +112,6 @@ let random_tile () =
   match Random.int 7 with
   0 -> L | 1 -> L' | 2 -> Z | 3 -> Z' | 4 -> O  | 5 -> I | _ -> T
 
-let initial_state c = {
-  what = Falling c.fall_delay;
-  board = Array.make_matrix c.m c.n None;
-  preview = Array.make_matrix 4 3 None;
-  score = 0;
-  lines = 0;
-  level = 0;
-  future = random_tile ();
-  present = random_tile ();
-  position = (1,c.n/2);
-  delay = level_delay c 0
-}
-
 (* c : configuration *)
 (* q : current state *)
 (* t : time elapsed since last call to this transition function *)
@@ -129,18 +120,18 @@ let initial_state c = {
 let sf = Printf.sprintf
 let debug msg = Printf.eprintf "debug: %s\n" msg; flush stderr
 
-let update_preview q =
-  let blit_stone t i j c =
-    List.iter (fun (di,dj) -> q.preview.(i + di).(j + dj) <- c) (stones_of_tile t)
+let update_preview c q =
+  let blit_stone t i j col =
+    List.iter (fun (di,dj) -> q.preview.(i + di).(j + dj) <- col) (stones_of_tile t)
   in
   let t = q.future in
-  let c = color_of_tile t in
-  for i = 0 to 3 do
-    for j = 0 to 2 do
+  let col = color_of_tile t in
+  for i = 0 to c.ph - 1 do
+    for j = 0 to c.pw - 1 do
       q.preview.(i).(j) <- None
     done
   done;
-  blit_stone t (preview_offset t) 1 (Some c)
+  blit_stone t (preview_offset t) 1 (Some col)
 
 let reset_board c q =
   q.what <- Falling c.fall_delay;
@@ -156,7 +147,25 @@ let reset_board c q =
   q.future <- random_tile ();
   q.present <- random_tile ();
   q.position <- (1,c.n/2);
-  update_preview q
+  update_preview c q
+
+let initial_state c =
+  let q = {
+    what = Falling c.fall_delay;
+    board = Array.make_matrix c.m c.n None;
+    preview = Array.make_matrix c.ph c.pw None;
+    score = 0;
+    lines = 0;
+    level = 0;
+    future = random_tile ();
+    present = random_tile ();
+    position = (1,c.n/2);
+    delay = level_delay c 0
+  }
+  in
+  reset_board c q;
+  q.delay <- level_delay c q.level;
+  q
 
 let filled c q i =
   Enum.for_all (fun (j) -> q.board.(i).(j) <> None) (0 -- (c.n - 1))
@@ -213,7 +222,7 @@ let update_board c q t k =
     q.future <- random_tile ();
     let (i,j) = (1,c.n/2) in
     q.position <- (i,j);
-    update_preview q;
+    update_preview c q;
     if might_occupy q.present i j then
       q.what <- Falling(q.delay)
     else

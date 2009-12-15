@@ -54,8 +54,8 @@ let display_board screen bg w h c q =
     done
   done;
 
-  for i = 0 to 3 do
-    for j = 0 to 2 do
+  for i = 0 to c.ph - 1 do
+    for j = 0 to c.pw - 1 do
       let s = q.preview.(i).(j) in
       let col = match s with
       | None -> (makeacol 0 0 0 255)
