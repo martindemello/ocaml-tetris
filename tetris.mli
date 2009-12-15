@@ -20,6 +20,7 @@ type configuration = {
 type state = {
   mutable what : control;
   board : stone array array;
+  preview : stone array array;
   mutable score : int;
   mutable lines : int;
   mutable level : int;

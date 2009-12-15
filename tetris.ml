@@ -87,9 +87,13 @@ let color_of_tile (_,t) =
 let height_of_tile = function
   Z -> 2 | Z' -> 2 | T -> 2 | O -> 2 | L -> 3 | L' -> 3 | I -> 3
 
+let preview_offset (rot, piece) = match piece with
+   I -> 0 | O -> 1 | _ -> 2
+
 type state = {
   mutable what : control;
   board : stone array array;
+  preview: stone array array;
   mutable score : int;
   mutable lines : int;
   mutable level : int;
@@ -107,6 +111,7 @@ let random_tile () =
 let initial_state c = {
   what = Falling c.fall_delay;
   board = Array.make_matrix c.m c.n None;
+  preview = Array.make_matrix 4 3 None;
   score = 0;
   lines = 0;
   level = 0;
@@ -124,6 +129,19 @@ let initial_state c = {
 let sf = Printf.sprintf
 let debug msg = Printf.eprintf "debug: %s\n" msg; flush stderr
 
+let update_preview q =
+  let blit_stone t i j c =
+    List.iter (fun (di,dj) -> q.preview.(i + di).(j + dj) <- c) (stones_of_tile t)
+  in
+  let t = q.future in
+  let c = color_of_tile t in
+  for i = 0 to 3 do
+    for j = 0 to 2 do
+      q.preview.(i).(j) <- None
+    done
+  done;
+  blit_stone t (preview_offset t) 1 (Some c)
+
 let reset_board c q =
   q.what <- Falling c.fall_delay;
   for i = 0 to c.m - 1 do
@@ -137,7 +155,8 @@ let reset_board c q =
   q.delay <- c.fall_delay;
   q.future <- random_tile ();
   q.present <- random_tile ();
-  q.position <- (1,c.n/2)
+  q.position <- (1,c.n/2);
+  update_preview q
 
 let filled c q i =
   Enum.for_all (fun (j) -> q.board.(i).(j) <> None) (0 -- (c.n - 1))
@@ -194,6 +213,7 @@ let update_board c q t k =
     q.future <- random_tile ();
     let (i,j) = (1,c.n/2) in
     q.position <- (i,j);
+    update_preview q;
     if might_occupy q.present i j then
       q.what <- Falling(q.delay)
     else

@@ -9,6 +9,8 @@ let cell_boundaries c x y =
   let x1, y1 = 10 + c.q * x, 10 + c.p * y in
   x1+1, y1+1, x1+c.q-1, y1+c.p-1
 
+let preview_cell_boundaries c x y = cell_boundaries c (x+c.n+2) (y+10)
+
 let init_screen width height =
   begin
     try set_gfx_mode GFX_AUTODETECT_WINDOWED width height 0 0;
@@ -48,6 +50,19 @@ let display_board screen bg w h c q =
       in
       drawing_mode (match s with None -> DRAW_MODE_TRANS | _ -> DRAW_MODE_SOLID);
       let x1, y1, x2, y2 = cell_boundaries c j i in
+      rectfill screen x1 y1 x2 y2 col
+    done
+  done;
+
+  for i = 0 to 3 do
+    for j = 0 to 2 do
+      let s = q.preview.(i).(j) in
+      let col = match s with
+      | None -> (makeacol 0 0 0 255)
+      | Some c -> allegro_color c
+      in
+      drawing_mode DRAW_MODE_SOLID;
+      let x1, y1, x2, y2 = preview_cell_boundaries c j i in
       rectfill screen x1 y1 x2 y2 col
     done
   done;
