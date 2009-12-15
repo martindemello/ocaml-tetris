@@ -60,7 +60,7 @@ let base_stones = function
 | O  -> [0,0;0,1;1,1;1,0]
 | L  -> [-1,0;0,0;1,0;1,1]
 | L' -> [-1,0;0,0;1,0;1,-1]
-| I  -> [0,0;1,0;2,0;3,0]
+| I  -> trans (-1, 0) [0,0;1,0;2,0;3,0]
 
 let map_of_rotation = function
 | R0 -> fun x -> x
@@ -88,7 +88,7 @@ let height_of_tile = function
   Z -> 2 | Z' -> 2 | T -> 2 | O -> 2 | L -> 3 | L' -> 3 | I -> 3
 
 let preview_offset (rot, piece) = match piece with
-   I -> 0 | O -> 1 | _ -> 2
+   I -> 1 | O -> 1 | _ -> 2
 
 type state = {
   mutable what : control;
