@@ -45,7 +45,7 @@ let display_board screen bg w h c q =
     for j = 0 to (c.n - 1) do
       let s = q.board.(i).(j) in
       let col = match s with
-      | None -> (makeacol 50 50 50 200)
+      | None -> (makeacol 150 50 50 200)
       | Some c -> allegro_color c
       in
       drawing_mode (match s with None -> DRAW_MODE_TRANS | _ -> DRAW_MODE_SOLID);
