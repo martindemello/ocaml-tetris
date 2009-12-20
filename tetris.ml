@@ -196,6 +196,7 @@ let varied_color tile =
     (Random.float (2.0 *. shade_variation)) -. shade_variation,
     Color.Dark(color_of_tile tile))
 
+(* returns true if the display needs updating *)
 let update_board c q t k =
   let occupied i j =
     (i < 0 or j < 0 or i >= c.m or j >= c.n or q.board.(i).(j) <> None)
