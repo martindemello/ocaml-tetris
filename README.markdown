@@ -15,7 +15,7 @@ The game-state and game-interaction parts have been separated as much as possibl
 Requires:  
 
 -  `ocaml-batteries`
--  `ocaml.allegro` [[download](http://www.linux-nantes.org/~fmonnier/ocaml/Allegro/)]
+-  `ocaml-allegro` [[download](http://www.linux-nantes.org/~fmonnier/ocaml/Allegro/)]
 -  GNU `make`
 
 The `makefile` assumes everything has been installed via `findlib` (if you have installed ocaml and batteries via godi this should hold good).
