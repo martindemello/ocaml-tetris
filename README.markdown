@@ -13,6 +13,7 @@ The game-state and game-interaction parts have been separated as much as possibl
 ## Install ##
 
 Requires:  
+
 -  `ocaml-batteries`
 -  `ocaml.allegro` [[download](http://www.linux-nantes.org/~fmonnier/ocaml/Allegro/)]
 -  GNU `make`
@@ -34,6 +35,7 @@ Background image from [NASA Images](http://www.nasaimages.org/luna/servlet/detai
 ## Contributing ##
 
 Patches gladly accepted. Main TODO items:
+
 - Better fonts for the text elements
 - Instructions to compile under Windows
 - Other frontends
