@@ -316,6 +316,7 @@ let update_board c q t k =
       else
         if move_piece 1 k then reached_bottom () else as_usual q.delay;
       if (oldi, oldj) <> q.position then flag := true;
+      if q.what == Dead then flag := true;
       place q.present;
       !flag
   | (Compacting(x,l),None) ->
