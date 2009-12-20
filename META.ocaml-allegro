@@ -1,0 +1,4 @@
+name = "ocaml-allegro"
+description = "Bindings to the allegro library."
+archive(byte) = "allegro.cma"
+archive(native) = "allegro.cmxa"
