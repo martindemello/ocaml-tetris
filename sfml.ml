@@ -121,7 +121,7 @@ let test_tetris () =
 
   let timed_update () =
     let tau = Time.as_milliseconds global_clock#get_elapsed_time in
-    if (tau > 200) then update None
+    if (tau > 50) then update None
   in
 
   let rec main_loop () =
