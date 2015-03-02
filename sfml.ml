@@ -1,3 +1,5 @@
+module Stone = Color
+
 open OcsfmlSystem
 open OcsfmlWindow
 open OcsfmlGraphics
@@ -32,26 +34,32 @@ let dead_message = new text ~font
 let top_left row col =
   (C.size *. (float_of_int col), C.size *. (float_of_int row))
 
-let rect_of row col =
+let color_of_stone color =
+  let s x = int_of_float (x *. 255.0) in
+  let (r, g, b) = Stone.rgb color in
+  Color.rgb (s r) (s g) (s b)
+
+let rect_of row col color =
   let position = top_left row col in
   let size = (C.size, C.size) in
+  let fill_color = color_of_stone color in
   new rectangle_shape ~size ~position
-    ~outline_thickness:1.
-    ~outline_color:Color.white
-    ~fill_color:(Color.rgb 100 100 200)
+    ~outline_thickness: 1.0
+    ~outline_color: Color.white
+    ~fill_color
     ()
 
 let draw_board (display: render_window) w =
   let open World in
   let open Board in
-  let color = OcsfmlGraphics.Color.rgb 0 0 0 in
-  display#clear ~color ();
+  let bgcolor = Color.rgb 0 0 0 in
+  display#clear ~color:bgcolor ();
   let b = w.board in
   for r = 0 to b.rows - 1 do
     for c = 0 to b.cols - 1 do
       match b.grid.(r).(c) with
-      | Some _ -> begin
-          let rect = rect_of r c in
+      | Some color -> begin
+          let rect = rect_of r c color in
           display#draw rect
         end
       | None -> ()
