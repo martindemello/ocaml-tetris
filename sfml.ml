@@ -86,21 +86,21 @@ let test_tetris () =
       let open Event in
       begin
         match e with
+        | KeyPressed { code = KeyCode.Escape }
         | Closed -> app#close 
         | KeyPressed { code = code ; _ }  ->
-            begin
-              let action = match code with
+          begin
+            let action = match code with
               | KeyCode.Up     -> Some(Rotate)
               | KeyCode.Down   -> Some(Down)
               | KeyCode.Left   -> Some(Left)
               | KeyCode.Right  -> Some(Right)
-              | KeyCode.Escape -> Some(Quit)
               | KeyCode.Space  -> Some(Drop)
               | KeyCode.P      -> Some(Pause)
               | _              -> None
-              in
-              update action
-            end
+            in
+            update action
+          end
         | _ -> () 
       end ;
       event_loop ()
