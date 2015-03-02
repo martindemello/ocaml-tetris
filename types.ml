@@ -21,5 +21,5 @@ let default_configuration = {
   q = 20;
   ph = 4;
   pw = 3;
-  fall_delay = 0.200 (* s *)
+  fall_delay = 0.800 (* s *)
 }

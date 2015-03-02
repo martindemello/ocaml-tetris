@@ -39,12 +39,12 @@ let update w t action =
       World.remove_current_piece w;
       let s = w.current in
       let time_up = t >= x in
-      let drop = time_up || action == Some Down in
+      let drop = (time_up || action = Some Down) in
       let t' = if time_up then w.delay else x -. t in
       if World.move_current_piece w ~drop ~action then begin
         World.place_current_piece w;
         keep_falling t'
       end else
         reached_bottom ();
-      w.dirty <- (w.state == Dead) ||
+      w.dirty <- (w.state = Dead) ||
                  (s.row, s.col) <> (w.current.row, w.current.col)
